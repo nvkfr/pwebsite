@@ -24,16 +24,39 @@ const auth = express.Router();
 
 auth.post('/login', (req, res) => {
   if(req.body) {
-    const email = req.body.email.toLocaleLowerCase();
-    const password = req.body.password.toLocaleLowerCase();
-    if(email === fakeUser.email && password === fakeUser.password) {
-      delete req.body.password;
-      /*res.json({sucess: true, data: req.body});*/
-      const token = jwt.sign({ iss: 'http://localhost:4201', role: 'admin', email: req.body.email }, secret);
-      res.json({ success: true, token: token });
-    } else {
-      res.json({success: false, message: 'identifiants incorrects'});
-    }
+
+      let MongoClient = mongo.MongoClient;
+      let url = 'mongodb://localhost:27017/users';
+      const email = req.body.email.toLocaleLowerCase();
+      const password = req.body.password.toLocaleLowerCase();
+
+      MongoClient.connect(url, (err, db) => {
+          if (err) {
+              console.log('Unable to connect to the server', err);
+          } else {
+              console.log('connection established');
+
+              const collection = db.collection('user');
+
+              collection.find({}).toArray(function(err, result) {
+                  if (err) {
+                    console.log('error retreiving the documents', err);
+                  } else if (result.length) {
+                      for (let i = 0; i < result.length; i++) {
+                          if (email === result[i].email && password === result[i].password) {
+                              delete req.body.password;
+                              /*res.json({sucess: true, data: req.body});*/
+                              const token = jwt.sign({iss: 'http://localhost:4201', role: 'admin', email: req.body.email}, secret);
+                              res.json({success: true, token: token});
+                          } else {
+                              res.json({success: false, message: 'identifiants incorrects'});
+                          }
+                      }
+                  }
+                  db.close();
+              })
+          }
+      });
   } else {
     res.json({success: false, message: 'données manquantes'});
   }
@@ -42,7 +65,7 @@ auth.post('/login', (req, res) => {
 api.get('/articles', (req, res) => {
     const MongoClient = mongo.MongoClient;
 
-    const url = 'mongodb://localhost:27017/articles';
+    let url = 'mongodb://localhost:27017/articles';
 
     MongoClient.connect(url, (err, db) => {
       if (err) {

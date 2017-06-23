@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -9,12 +10,20 @@ import { AuthService } from '../auth.service';
 export class LoginComponent implements OnInit {
 
   loginData: any = null;
-  isAnthenticated = false;
-  welcomeMessage = '';
+  isAuthenticated = false;
 
-  constructor(private _authService: AuthService) { }
+  constructor(private _authService: AuthService, private _router: Router) { }
 
   ngOnInit() {
+    if (localStorage.getItem('login-data')) {
+      this.refreshFlags();
+    }
+  }
+
+  refreshFlags() {
+    this.isAuthenticated = true;
+    const link = ['/blog'];
+    this._router.navigate( link );
   }
 
 
@@ -29,10 +38,8 @@ export class LoginComponent implements OnInit {
   handleLoginSuccess(data) {
     console.log('success', data);
     this.loginData = data;
-    this.isAnthenticated = true;
-    this.welcomeMessage = 'Bienvenue';
+    this.refreshFlags();
     localStorage.setItem('login-data', JSON.stringify(data));
-
   }
 
   handleLoginFailure(data) {
