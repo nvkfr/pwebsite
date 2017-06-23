@@ -1,0 +1,1 @@
+In order to have a functionnal database, create a data directory here, then create mongoDB database in that folder. Put the data you want and check server.js for the settings
